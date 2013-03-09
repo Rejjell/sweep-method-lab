@@ -99,22 +99,13 @@ void deleteUpperDiag(double** &A,int size ,int k)//удаление наддиагонального эел
 }
 
 
-void forwardStep(double** &A,int size )
-{
-	
-}
 
-void reverseStep(double** &A,int size )
+void serialSweepMethod(double** &A,int size , double* &x )
 {
-	
-}
+	int n=size;
 
-
-int _tmain(int argc, _TCHAR* argv[])
-{
-	int n=3;
-	generateData(A,n);
-	printMatrix(A,n);
+	double *alpha = new double[n];
+	double * beta = new double[n];
 
 	alpha[1]=-A[0][1]/A[0][0];
 	beta[1]=f[0]/A[0][0];
@@ -125,30 +116,35 @@ int _tmain(int argc, _TCHAR* argv[])
 		beta[i+1] = (f[i]-A[i][i-1]*beta[i])/(A[i][i-1]*alpha[i]+A[i][i]);
 		
 	}
-	printf("\n");
-	for (int i = 0; i < n; i++)
-	{
-		printf("%0*.*f ", 4, 2,alpha[i]);
-	}
-	printf("\n");
-
-	for (int i = 0; i < n; i++)
-	{
-		printf("%0*.*f ", 4, 2,beta[i]);
-	}
-	printf("\n");
 
 	x[n-1]=(f[n-1]-A[n-1][n-2]*beta[n]) /(A[n-1][n-2]*alpha[n-1]+A[n-1][n-1]);
 	for (int i = n-2; i >=0; i--)
 	{
 		x[i]=alpha[i+1]* x[i+1] + beta[i+1];
 	}
+	 
+	delete alpha; 
+	delete beta;
+
+}
+
+
+
+
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+	int n=3;
+	generateData(A,n);
+	printMatrix(A,n);
+
+	serialSweepMethod(A,n,x);
 
 	for (int i = 0; i < n; i++)
 	{
 		printf("%0*.*f ", 4, 2,x[i]);
 	}
-	printf("\n");
+	
 
 	deleteData(A,n);
 	system("pause");
