@@ -71,6 +71,8 @@ void generateData(double ** &A,int n)
 		 copyA[i][i+1]= A[i][i+1];
 		 copyf[i]=f[i];
 
+		 x[i]=0;
+
 		/*copyA[i][i]=10;
 		if (i>0) copyA[i][i-1]=1;
 		if (i<n-1) copyA[i][i+1]=2;
@@ -158,25 +160,15 @@ void serialSweepMethod(double** &A, double*&f ,int size , double* &x )
 
 int main(int argc, char **argv)
 {
-	int n=4;
-	int p=2; // количество потоков
+	int n=12;
+	int p=3; // количество потоков
 	int m=n/p;
 
-	generateData(A,n);
-	printMatrix(A,n);
+	generateData(A,n);;	
 	
 
-	
-	/*serialSweepMethod(A, f ,n,x);
-	for (int i = 0; i < n; i++)
-	{
-		printf("%0*.*f ", 4, 2,x[i]);
-	}
-	printf("\n");
-	
-	system("pause");*/
+	serialSweepMethod(A, f ,n,x);
 
-	int test( 999 );
 	omp_set_num_threads(p);
 
     #pragma omp parallel 
@@ -197,17 +189,7 @@ int main(int argc, char **argv)
 		}
 
 
-		//printf("thread %d start = %d end %d\n",k, startIndex,endIndex );
     }
-	printf("\n");
-
-	printMatrix(A,n);
-	printf("\n");
-	for (int i = 0; i < n; i++)
-	{
-		printf("%0*.*f ", 4, 2,f[i]);
-	}
-	printf("\n");
 
 		double** B = new double *[p]; 
 		double * fB=new double[p];
@@ -228,9 +210,6 @@ int main(int argc, char **argv)
 			}
 			fB[i]=f[(i+1)*m-1];
 		}
-	
-		printf("\n");
-		//printMatrix(A,n);
 
 		serialSweepMethod(B,fB,p,xB);
 
@@ -247,8 +226,9 @@ int main(int argc, char **argv)
 		int startIndex=k*m;
 		int	endIndex=(k+1)*m-1;
 
-		double x1=xB[ (k*m-1)/p-1];
-		double x2 =xB [ ((k+1)*m-1)/p-1];
+		double x1=xB[ (k*m-1)/p];
+		double x2 =xB [ ((k+1)*m-1)/p];
+
 
 		int index1= k*m-1;
 		int index2 = (k+1)*m-1;
@@ -259,6 +239,7 @@ int main(int argc, char **argv)
 			x[i]= -A[i][index2]*x2+f[i];
 			if (index1>=0) x[i]-=A[i][index2]*x1;
 			x[i]/=(double)A[i][i];
+
 		}
 	}
 
@@ -269,13 +250,6 @@ int main(int argc, char **argv)
 
 		delete B;
 		delete xB;
-
-		printMatrix(copyA,n);
-
-		for (int i = 0; i < n; i++)
-		{
-			printf("%0*.*f ", 4, 2,copyf[i]);
-		}
 
 		double s=-0;
 		for (int i = 0; i < n; i++)
@@ -288,13 +262,16 @@ int main(int argc, char **argv)
 			copyf[i]-=s;
 		}
 
-		printf("\n");
+
+		
+		printf("\n Nevyazka \n");
 
 
 		for (int i = 0; i < n; i++)
 		{
 			printf("%0*.*f ", 4, 2,copyf[i]);
 		}
+		
 
 
 	deleteData(A,n);
