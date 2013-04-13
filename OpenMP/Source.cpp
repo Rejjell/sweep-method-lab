@@ -125,7 +125,7 @@ void serialSweepMethod(double** &A, double*&f ,int size , double* &x )
 		
 	}
 
-	x[n-1]=(f[n-1]-A[n-1][n-2]*beta[n]) /(A[n-1][n-2]*alpha[n-1]+A[n-1][n-1]);
+	x[n-1]=(f[n-1]-A[n-1][n-2]*beta[n-1]) /(A[n-1][n-2]*alpha[n-1]+A[n-1][n-1]);
 	for (int i = n-2; i >=0; i--)
 	{
 		x[i]=alpha[i+1]* x[i+1] + beta[i+1];
