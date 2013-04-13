@@ -1,25 +1,3 @@
-/*#include <iostream>
-#include <omp.h>
-#include "stdlib.h"
-
-using namespace std;
-
-int main(int argc, char **argv)
-{
-    int test( 999 );
-
-    omp_set_num_threads( 2 );
-    #pragma omp parallel reduction(+:test)
-    {
-        #pragma omp critical
-        cout << "test = " << test << endl;
-    }
-	system("pause");
-    return EXIT_SUCCESS;
-}*/
-// SweepMethod.cpp : Defines the entry point for the console application.
-//
-
 #include "stdio.h";
 #include "conio.h";
 #include "stdlib.h";
