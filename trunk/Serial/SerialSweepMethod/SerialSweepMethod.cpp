@@ -19,6 +19,7 @@ double step;
 double halfstep;
 float mainDiag;
 float sideDiag;
+float mainDiagFirstLast = 2;
 
 void deleteData(int n)
 {
@@ -139,19 +140,31 @@ void serialSweepMethod(double*&f, int size, double* &x )
 	int n = size;
 
 	double *alpha = new double[n];
-	double * beta = new double[n];
+	double *beta = new double[n];
 
-	alpha[1]=-sideDiag/mainDiag;
-	beta[1]=f[0]/mainDiag;
+	alpha[1]=0;
+	beta[1]=f[0]/mainDiagFirstLast;
 
 	for (int i = 1; i < n-1; i++)
 	{
-		alpha[i+1]= -sideDiag/(sideDiag*alpha[i] + mainDiag);	
-		beta[i+1] = (f[i] - sideDiag*beta[i])/(sideDiag*alpha[i] + mainDiag);
-		
+		if (i == 1)
+		{
+			alpha[i+1]= -sideDiag/mainDiag;	
+			beta[i+1] = f[i]/mainDiag;
+		}
+		else if (i == n-2)
+		{
+			alpha[i+1]= 0;	
+			beta[i+1] = (f[i] - sideDiag*beta[i])/(sideDiag*alpha[i] + mainDiag);
+		}
+		else
+		{
+			alpha[i+1]= -sideDiag/(sideDiag*alpha[i] + mainDiag);	
+			beta[i+1] = (f[i] - sideDiag*beta[i])/(sideDiag*alpha[i] + mainDiag);
+		}
 	}
 
-	x[n-1]=(f[n-1] - sideDiag*beta[n-1])/(sideDiag*alpha[n-1] + mainDiag);
+	x[n-1]=f[n-1]/mainDiagFirstLast;
 
 	for (int i = n-2; i >=0; i--)
 	{
