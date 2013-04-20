@@ -10,8 +10,6 @@
 #include <iostream>
 #include <math.h>
 
-float ** A;
-
 double *a, *b, *c, *f, *x, *func;
 
 int n = 50;
@@ -19,54 +17,17 @@ double left = -10;
 double right = 10;
 double step;
 double halfstep;
+float mainDiag;
+float sideDiag;
 
-/*void generateData(double ** &A,int n)
+void deleteData(int n)
 {
-	A=new double*[n];
-	copyA=new double*[n];
-	for (int i = 0; i < n; i++)
-	{
-		A[i]=new double[n];
-		copyA[i]=new double[n];
-		for (int j = 0; j  < n; j ++)
-		{
-			A[i][j]=0;
-			copyA[i][j]=0;
-		}
-	}
-
-	x = new double[n];
-	f = new double[n];
-	copyf = new double[n];
-
-	srand (time(NULL));
-
-	for (int i = 0; i < n; i++)
-	{
-		A[i][i]=1000+rand()%1000;
-		if (i>0) A[i][i-1]=1 + rand()%100;
-		if (i<n-1) A[i][i+1]=1 + rand()%100;
-		
-		f[i]=rand()%100;
-		
-		copyA[i][i]=A[i][i];
-		 copyA[i][i-1]= A[i][i-1];
-		 copyA[i][i+1]= A[i][i+1];
-		 copyf[i]=f[i];
-
-		 x[i]=0;
-	}
-
-}*/
-
-void deleteData(double **A,int n)
-{
-	for (int i = 0; i < n+1; i++)
-		delete A[i];
-
-	delete A;
-	delete f;
-	delete c;
+	delete[] f;
+	delete[] a;
+	delete[] b;
+	delete[] c;
+	delete[] x;
+	delete[] func;
 }
 
 void printMatrix(double **A, double *f, int n)
@@ -154,26 +115,10 @@ double delta2f(int k)
 	return deltaf(k+1) - deltaf(k);
 }
 
-void makeMatrix(float ** &A, int n)
+void makeMatrix(int n)
 {
-	A = new float*[n+1];
-
-	for (int i = 0; i < n+1; i++)
-	{
-		A[i] = new float[n+1];
-		for (int j = 0; j  < n+1; j ++)
-			A[i][j]=0;
-	}
-
-	A[0][0] = 2;
-	A[n][n] = 2;
-
-	for (int i=1; i<n; i++)
-	{
-		A[i][i] = 6;
-		if (i>1) A[i][i-1] = 1;
-		if (i<n-1) A[i][i+1] = 1;
-	}
+	mainDiag = 6;
+	sideDiag = 1;
 
 	f = new double[n+1];
 
@@ -189,40 +134,41 @@ void makeMatrix(float ** &A, int n)
 
 }
 
-void serialSweepMethod(float** &A, double*&f, int size, double* &x )
+void serialSweepMethod(double*&f, int size, double* &x )
 {
 	int n = size;
 
 	double *alpha = new double[n];
 	double * beta = new double[n];
 
-	alpha[1]=-A[0][1]/A[0][0];
-	beta[1]=f[0]/A[0][0];
+	alpha[1]=-sideDiag/mainDiag;
+	beta[1]=f[0]/mainDiag;
 
 	for (int i = 1; i < n-1; i++)
 	{
-		alpha[i+1]= -A[i][i+1]/(A[i][i-1]*alpha[i]+A[i][i]);	
-		beta[i+1] = (f[i]-A[i][i-1]*beta[i])/(A[i][i-1]*alpha[i]+A[i][i]);
+		alpha[i+1]= -sideDiag/(sideDiag*alpha[i] + mainDiag);	
+		beta[i+1] = (f[i] - sideDiag*beta[i])/(sideDiag*alpha[i] + mainDiag);
 		
 	}
 
-	x[n-1]=(f[n-1] - A[n-1][n-2]*beta[n-1])/(A[n-1][n-2]*alpha[n-1] + A[n-1][n-1]);
+	x[n-1]=(f[n-1] - sideDiag*beta[n-1])/(sideDiag*alpha[n-1] + mainDiag);
+
 	for (int i = n-2; i >=0; i--)
 	{
-		x[i]=alpha[i+1]* x[i+1] + beta[i+1];
+		x[i]=alpha[i+1]*x[i+1] + beta[i+1];
 	}
 	 
-	delete alpha; 
-	delete beta;
+	delete[] alpha; 
+	delete[] beta;
 
 }
 
 int main(int argc, char **argv)
 {
-	n = 50000; //Размерность сетки
+	n = 1000000; //Размерность сетки
 	step = (right - left)/n;
 	halfstep = step/2;
-	//generateData(A,n);;	
+	
 
 	x = new double[n+2];
 	func = new double[n+2];
@@ -233,7 +179,7 @@ int main(int argc, char **argv)
 		func[i] = calcFunction(x[i]);
 	}
 
-	makeMatrix(A, n);
+	makeMatrix(n);
 
 	a = new double[n+1];
 	b = new double[n+1];
@@ -241,7 +187,7 @@ int main(int argc, char **argv)
 
 	//printMatrix(A, f, n+1);
 
-	serialSweepMethod(A, f, n+1, c);
+	serialSweepMethod(f, n+1, c);
 
 	for (int i=0; i<n; i++)
 	{
@@ -252,29 +198,9 @@ int main(int argc, char **argv)
 	b[n] = b[n-1] + calcSecondDer(right)*halfstep;
 	a[n] = func[n];
 
-
-	/*for (int i = 0; i < n+1; i++)
-	{
-		printf("%*.*f ", 4, 10, a[i]);
-		printf("%*.*f ", 4, 10, b[i]);
-		printf("%*.*f ", 4, 10, c[i]);
-		printf("\n");
-	}*/
-
-	/*FILE *F; 
-	F = fopen("E:\\Run.txt","w"); 
-	
-	for (int i=0; i<n+1; i++)
-	{
-		fprintf(F,"(%f;%f)", x[i], calcSpline(x[i]));
-		printf("%*.*f ", 4, 10, calcSpline(x[i]));
-	}
-
-	fclose(F);*/
-
-	double inaccuracy = 0; //Погрешность
-	double inaccuracyDer = 0; //Погрешность производной
-	double littleStep = step/4;
+	float inaccuracy = 0; //Погрешность
+	float inaccuracyDer = 0; //Погрешность производной
+	float littleStep = step/4;
 
 	for (double x = left; x <=right; x += littleStep)
 	{
@@ -289,25 +215,7 @@ int main(int argc, char **argv)
 	printf("%*.*f ", 4, 10, inaccuracyDer);
 
 
-	/*double s=0;
-	for (int i = 0; i < n+1; i++)
-	{
-		s=0;
-		for (int j = 0; j < n+1; j++)
-		{
-			s+=A[i][j]*c[j];
-		}
-		f[i]-=s;
-	}*/
-		
-	/*printf("\n Nevyazka \n");
-
-	for (int i = 0; i < n+1; i++)
-	{
-		printf("%*.*f ", 4, 5, f[i]);
-	}*/
-
-	//deleteData(A,n);
+	deleteData(n);
 	system("pause");
 	return 0;
 }
