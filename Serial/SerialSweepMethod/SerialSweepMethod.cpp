@@ -1,5 +1,5 @@
-// SerialSweepMethod.cpp : Defines the entry point for the console application.
-//
+#define _CRT_SECURE_NO_WARNINGS
+
 
 #include "stdafx.h"
 #include "stdio.h";
@@ -8,13 +8,19 @@
 #include <time.h>
 #include <omp.h>
 #include <iostream>
+#include <math.h>
 
+double ** A;
 
-double ** A, **copyA ;
+double *a, *b, *c, *f, *x, *func;
 
-double *x,*f , *copyf;
+int n = 50;
+double left = -10;
+double right = 10;
+double step;
+double halfstep;
 
-void generateData(double ** &A,int n)
+/*void generateData(double ** &A,int n)
 {
 	A=new double*[n];
 	copyA=new double*[n];
@@ -51,59 +57,141 @@ void generateData(double ** &A,int n)
 		 x[i]=0;
 	}
 
-}
+}*/
 
 void deleteData(double **A,int n)
 {
-	for (int i = 0; i < n; i++)
-	{
+	for (int i = 0; i < n+1; i++)
 		delete A[i];
-		delete copyA[i];
-		
-	}
+
 	delete A;
-	delete copyA;
 	delete f;
-	delete copyf;
-	delete x;
+	delete c;
 }
 
-void printMatrix(double **A,int n)
+void printMatrix(double **A, double *f, int n)
 {
 	for (int i = 0; i < n; i++)
 	{
 		for (int j = 0; j < n; j++)
-		{
 			printf("%0*.*f ", 4, 2,A[i][j]);
-		}
+
+		printf("    %0*.*f", 4, 2, f[i]);
 		printf("\n");
 	}
 }
 
-void sub(double** &A,int size ,double coef,int j,int k)//вычитание j строки, умноженной на coef из k
+double calcFunction(double value)
 {
-			for (int i = 0; i < size; i++)
-			{
-				A[k][i]-=coef * A[j][i];
-			}
-			f[k]-=coef * f[j];
+	return sin(value);
 }
 
-void deleteUnderDiag(double** &A,int size ,int k)//удаление поддиагонального эелемента k строки
+double calcDer(double value)
 {
-	sub(A,size , A[k+1][k] /A[k][k] ,k,k+1);
+	return cos(value);
 }
 
-void deleteUpperDiag(double** &A,int size ,int k)//удаление наддиагонального эелемента k строки
+double calcSecondDer(double value)
 {
-	sub(A,size , A[k-1][k] /A[k][k] ,k,k-1);
+	return -sin(value);
 }
 
-
-
-void serialSweepMethod(double** &A, double*&f ,int size , double* &x )
+double calcSpline(double value)
 {
-	int n=size;
+	int k;
+	double x0;
+
+	if (value < left + halfstep) 
+	{
+		k = 0;
+		x0 = x[1] - halfstep;
+	}
+	else if (value >= right - halfstep) 
+	{
+		k = n;
+		x0 = x[n];
+	}
+	else 
+	{
+		k = (value - (left + halfstep))/step + 1;
+		x0 = x[k] + halfstep;
+	}
+
+	return a[k] + b[k]*(value - x0) + c[k]*pow(value - x0,2);
+}
+
+double calcSplineDer(double value)
+{
+	int k;
+	double x0;
+
+	if (value < left + halfstep) 
+	{
+		k = 0;
+		x0 = x[1] - halfstep;
+	}
+	else if (value >= right - halfstep) 
+	{
+		k = n;
+		x0 = x[n];
+	}
+	else 
+	{
+		k = (value - (left + halfstep))/step + 1;
+		x0 = x[k] + halfstep;
+	}
+
+	return b[k] + 2*c[k]*(value - x0);
+}
+
+double deltaf(int k)
+{
+	return func[k+1] - func[k];
+}
+
+double delta2f(int k)
+{
+	return deltaf(k+1) - deltaf(k);
+}
+
+void makeMatrix(double ** &A, int n)
+{
+	A = new double*[n+1];
+
+	for (int i = 0; i < n+1; i++)
+	{
+		A[i] = new double[n+1];
+		for (int j = 0; j  < n+1; j ++)
+			A[i][j]=0;
+	}
+
+	A[0][0] = 2;
+	A[n][n] = 2;
+
+	for (int i=1; i<n; i++)
+	{
+		A[i][i] = 6;
+		if (i>1) A[i][i-1] = 1;
+		if (i<n-1) A[i][i+1] = 1;
+	}
+
+	f = new double[n+1];
+
+	f[0] = calcSecondDer(left);
+	f[n] = calcSecondDer(right);
+
+	for (int i=1; i<n; i++)
+	{
+		f[i] = delta2f(i-1)/(halfstep*halfstep);
+		if (i == 1) f[i] -= calcSecondDer(left)/2;
+		if (i == n-1) f[i] -= calcSecondDer(right)/2;
+	}
+
+}
+
+void serialSweepMethod(double** &A, double*&f, int size, double* &x )
+{
+	int n = size;
 
 	double *alpha = new double[n];
 	double * beta = new double[n];
@@ -118,7 +206,7 @@ void serialSweepMethod(double** &A, double*&f ,int size , double* &x )
 		
 	}
 
-	x[n-1]=(f[n-1]-A[n-1][n-2]*beta[n]) /(A[n-1][n-2]*alpha[n-1]+A[n-1][n-1]);
+	x[n-1]=(f[n-1] - A[n-1][n-2]*beta[n-1])/(A[n-1][n-2]*alpha[n-1] + A[n-1][n-1]);
 	for (int i = n-2; i >=0; i--)
 	{
 		x[i]=alpha[i+1]* x[i+1] + beta[i+1];
@@ -131,38 +219,95 @@ void serialSweepMethod(double** &A, double*&f ,int size , double* &x )
 
 int main(int argc, char **argv)
 {
-	int n=100;
+	n = 50000; //Размерность сетки
+	step = (right - left)/n;
+	halfstep = step/2;
+	//generateData(A,n);;	
 
-	generateData(A,n);;	
+	x = new double[n+2];
+	func = new double[n+2];
+
+	for (int i=0; i<n+1; i++)
+	{
+		x[i] = left + i*step;
+		func[i] = calcFunction(x[i]);
+	}
+
+	makeMatrix(A, n);
+
+	a = new double[n+1];
+	b = new double[n+1];
+	c = new double[n+1];
+
+	//printMatrix(A, f, n+1);
+
+	serialSweepMethod(A, f, n+1, c);
+
+	for (int i=0; i<n; i++)
+	{
+		b[i] = (halfstep/2)*(c[i] - c[i+1]) + deltaf(i)/step;
+		a[i] = halfstep*(b[i] - halfstep*c[i]) + func[i];
+	}
+
+	b[n] = b[n-1] + calcSecondDer(right)*halfstep;
+	a[n] = func[n];
+
+
+	/*for (int i = 0; i < n+1; i++)
+	{
+		printf("%*.*f ", 4, 10, a[i]);
+		printf("%*.*f ", 4, 10, b[i]);
+		printf("%*.*f ", 4, 10, c[i]);
+		printf("\n");
+	}*/
+
+	/*FILE *F; 
+	F = fopen("E:\\Run.txt","w"); 
 	
+	for (int i=0; i<n+1; i++)
+	{
+		fprintf(F,"(%f;%f)", x[i], calcSpline(x[i]));
+		printf("%*.*f ", 4, 10, calcSpline(x[i]));
+	}
 
-	serialSweepMethod(A, f ,n,x);
+	fclose(F);*/
+
+	double inaccuracy = 0; //Погрешность
+	double inaccuracyDer = 0; //Погрешность производной
+	double littleStep = step/4;
+
+	for (double x = left; x <=right; x += littleStep)
+	{
+		double tmp = abs(calcFunction(x) - calcSpline(x));
+		if (tmp > inaccuracy) inaccuracy = tmp;
+
+		tmp = abs(calcDer(x) - calcSplineDer(x));
+		if (tmp > inaccuracyDer) inaccuracyDer = tmp;
+	}
+
+	printf("%*.*f \n", 4, 10, inaccuracy);
+	printf("%*.*f ", 4, 10, inaccuracyDer);
 
 
-		double s=-0;
-		for (int i = 0; i < n; i++)
+	/*double s=0;
+	for (int i = 0; i < n+1; i++)
+	{
+		s=0;
+		for (int j = 0; j < n+1; j++)
 		{
-			s=0;
-			for (int j = 0; j < n; j++)
-			{
-				s+=copyA[i][j]*x[j];
-			}
-			copyf[i]-=s;
+			s+=A[i][j]*c[j];
 		}
-
-
+		f[i]-=s;
+	}*/
 		
-		printf("\n Nevyazka \n");
+	/*printf("\n Nevyazka \n");
 
+	for (int i = 0; i < n+1; i++)
+	{
+		printf("%*.*f ", 4, 5, f[i]);
+	}*/
 
-		for (int i = 0; i < n; i++)
-		{
-			printf("%0*.*f ", 4, 2,copyf[i]);
-		}
-		
-
-
-	deleteData(A,n);
+	//deleteData(A,n);
 	system("pause");
 	return 0;
 }
