@@ -12,7 +12,7 @@
 
 double *a, *b, *c, *f, *x, *func;
 
-int n = 50;
+int n;
 double left = -10;
 double right = 10;
 double step;
@@ -184,8 +184,6 @@ int main(int argc, char **argv)
 	a = new double[n+1];
 	b = new double[n+1];
 	c = new double[n+1];
-
-	//printMatrix(A, f, n+1);
 
 	serialSweepMethod(f, n+1, c);
 
