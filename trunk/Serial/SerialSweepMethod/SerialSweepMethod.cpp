@@ -10,7 +10,7 @@
 #include <iostream>
 #include <math.h>
 
-double ** A;
+float ** A;
 
 double *a, *b, *c, *f, *x, *func;
 
@@ -154,13 +154,13 @@ double delta2f(int k)
 	return deltaf(k+1) - deltaf(k);
 }
 
-void makeMatrix(double ** &A, int n)
+void makeMatrix(float ** &A, int n)
 {
-	A = new double*[n+1];
+	A = new float*[n+1];
 
 	for (int i = 0; i < n+1; i++)
 	{
-		A[i] = new double[n+1];
+		A[i] = new float[n+1];
 		for (int j = 0; j  < n+1; j ++)
 			A[i][j]=0;
 	}
@@ -189,7 +189,7 @@ void makeMatrix(double ** &A, int n)
 
 }
 
-void serialSweepMethod(double** &A, double*&f, int size, double* &x )
+void serialSweepMethod(float** &A, double*&f, int size, double* &x )
 {
 	int n = size;
 
