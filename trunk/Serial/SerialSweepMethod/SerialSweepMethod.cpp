@@ -9,6 +9,8 @@
 #include <omp.h>
 #include <iostream>
 #include <math.h>
+#include <fstream>
+#include "timer.h"
 
 double *a, *b, *c, *f, *x, *func;
 
@@ -178,10 +180,20 @@ void serialSweepMethod(double*&f, int size, double* &x )
 
 int main(int argc, char **argv)
 {
-	n = 1000000; //Размерность сетки
+	std::ifstream in;
+	std::ofstream out;
+	std::ofstream log;
+	in.open(argv[1]);
+	out.open(argv[2]);
+	log.open(argv[3]);
+	in >> n;
+
+
 	step = (right - left)/n;
 	halfstep = step/2;
 	
+	Timer timer;
+	timer.start();
 
 	x = new double[n+2];
 	func = new double[n+2];
@@ -209,6 +221,8 @@ int main(int argc, char **argv)
 	b[n] = b[n-1] + calcSecondDer(right)*halfstep;
 	a[n] = func[n];
 
+	timer.stop();
+
 	float inaccuracy = 0; //Погрешность
 	float inaccuracyDer = 0; //Погрешность производной
 	float littleStep = step/4;
@@ -222,12 +236,13 @@ int main(int argc, char **argv)
 		if (tmp > inaccuracyDer) inaccuracyDer = tmp;
 	}
 
-	printf("%*.*f \n", 4, 10, inaccuracy);
-	printf("%*.*f ", 4, 10, inaccuracyDer);
-
+	out << inaccuracy <<" "<<inaccuracyDer;
+	log << timer.getElapsed();
+	in.close();
+	out.close();
+	log.close();
 
 	deleteData(n);
-	system("pause");
 	return 0;
 }
 
