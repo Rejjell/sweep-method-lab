@@ -4,6 +4,7 @@
 #include <time.h>
 #include <omp.h>
 #include <iostream>
+#include <list>
 
 double ** A, **copyA ;
 
@@ -24,8 +25,7 @@ void generateData(double ** &A,int n)
 		}
 	}
 
-	//alpha = new double[n];s
-	//beta = new double[n];
+
 	x = new double[n];
 	f = new double[n];
 	copyf = new double[n];
@@ -138,11 +138,11 @@ void serialSweepMethod(double** &A, double*&f ,int size , double* &x )
 
 int main(int argc, char **argv)
 {
-	int n=12;
-	int p=3; // количество потоков
+	int n=13;
+	int p=2; // количество потоков
 	int m=n/p;
 
-	generateData(A,n);;	
+	generateData(A,n);
 	
 
 	serialSweepMethod(A, f ,n,x);
@@ -153,19 +153,28 @@ int main(int argc, char **argv)
     {
 		int k=omp_get_thread_num();
 		int startIndex=k*m;
-		int	endIndex=(k+1)*m-1;
+		int	endIndex=(k+1)*m-1; 
+		if (k==p-1) endIndex = n-1;
+
+		printf("k= %d , start = %d , end =%d \n",k,startIndex,endIndex);
+
+
+		if (k==p-1) endIndex = n-1;
+		
 		for (int i = startIndex; i <= endIndex ; i++)
 		{
 			if (i!=n-1) deleteUnderDiag(A,n,i);
-			#pragma omp barrier
+			//#pragma omp barrier
 		}
-
+		
 		for (int i = endIndex-1; i >= startIndex-1 ; i--)
 		{
 			if (i>0) deleteUpperDiag(A,n,i);
-			#pragma omp barrier
+			//#pragma omp barrier
 		}
 
+		
+		
 
     }
 
@@ -202,7 +211,9 @@ int main(int argc, char **argv)
     {
 		int k=omp_get_thread_num();
 		int startIndex=k*m;
-		int	endIndex=(k+1)*m-1;
+		int endIndex=(k+1)*m-1;
+
+		if (k==p-1) endIndex = n-1;
 
 		double x1=xB[ (k*m-1)/p];
 		double x2 =xB [ ((k+1)*m-1)/p];
@@ -211,7 +222,7 @@ int main(int argc, char **argv)
 		int index1= k*m-1;
 		int index2 = (k+1)*m-1;
 
-		#pragma omp barrier
+		//#pragma omp barrier
 		for (int i = startIndex; i < endIndex ; i++)
 		{
 			x[i]= -A[i][index2]*x2+f[i];
