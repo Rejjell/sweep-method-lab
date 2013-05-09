@@ -1,15 +1,16 @@
-#define _CRT_SECURE_NO_WARNINGS
+//#define _CRT_SECURE_NO_WARNINGS
+
 
 #include "stdafx.h"
-#include "stdio.h";
-#include "conio.h";
-#include "stdlib.h";
+#include "stdio.h"
+#include "stdlib.h"
 #include <time.h>
 #include <omp.h>
 #include <iostream>
-#include <math.h>
+#include <cmath>
 #include <fstream>
 #include "timer.h"
+#include <string>
 
 double *a, *b, *c, *f, *x, *func;
 
@@ -179,13 +180,29 @@ void serialSweepMethod(double*&f, int size, double* &x )
 
 int main(int argc, char **argv)
 {
-	std::ifstream in;
+	//std::ifstream in;
 	std::ofstream out;
 	std::ofstream log;
-	in.open(argv[1]);
+	//in.open(argv[1]);
 	out.open(argv[2]);
 	log.open(argv[3]);
-	in >> n;
+
+	
+	std::string in(argv[1]);
+	int i = in.find("Ns/") + 4;
+	std::string nstr = "";
+
+
+	while (argv[1][i] != '.')
+	{
+		nstr += argv[1][i];
+		i++;
+	}
+
+	n = atoi(nstr.c_str());
+
+	
+	//in >> n;
 
 
 	step = (right - left)/n;
@@ -228,16 +245,17 @@ int main(int argc, char **argv)
 
 	for (double x = left; x <=right; x += littleStep)
 	{
-		double tmp = abs(calcFunction(x) - calcSpline(x));
+		double tmp = fabs(calcFunction(x) - calcSpline(x));
 		if (tmp > inaccuracy) inaccuracy = tmp;
 
-		tmp = abs(calcDer(x) - calcSplineDer(x));
+		tmp = fabs(calcDer(x) - calcSplineDer(x));
 		if (tmp > inaccuracyDer) inaccuracyDer = tmp;
+
 	}
 
 	out << inaccuracy <<" "<<inaccuracyDer;
 	log << timer.getElapsed();
-	in.close();
+	//in.close();
 	out.close();
 	log.close();
 
